@@ -3,7 +3,6 @@ use crossterm::terminal::disable_raw_mode;
 pub mod key_handler;
 pub mod app;
 
-
 fn main() {
     let mut app = app::App::new();
 

@@ -20,7 +20,6 @@ pub enum AppMode {
     Insert,
 }
 
-
 pub struct App {
     key_handler: KeyHandler,
     selection: i16,
@@ -64,7 +63,7 @@ impl App {
                         AppMode::Insert => "i"
                     },
                     self.search)),
-                //cursor::MoveLeft(11 + (self.search.len() as u16)),
+                cursor::MoveLeft(11 + (self.search.len() as u16)),
             )?;
 
             for (i, option) in options.iter()
