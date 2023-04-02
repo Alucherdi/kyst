@@ -42,7 +42,14 @@ impl App {
         let options: Vec<&str> = vec![
             "option 1",
             "option 2",
-            "option 3"
+            "option 3",
+            "option 4",
+            "option 5",
+            "set 6",
+            "set 7",
+            "iu 8",
+            "iu 9",
+            "iu 10",
         ];
 
         terminal::enable_raw_mode().unwrap();
@@ -51,8 +58,13 @@ impl App {
         loop {
             execute!(
                 stdout(),
-                Print(format!("Prompt: {}\n", self.search)),
-                cursor::MoveLeft(8 + (self.search.len() as u16)),
+                Print(format!("Prompt[{}]: {}\n", 
+                    match self.mode {
+                        AppMode::Normal => "n",
+                        AppMode::Insert => "i"
+                    },
+                    self.search)),
+                //cursor::MoveLeft(11 + (self.search.len() as u16)),
             )?;
 
             for (i, option) in options.iter()

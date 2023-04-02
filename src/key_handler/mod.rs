@@ -27,16 +27,16 @@ impl KeyHandler {
                     AppMode::Normal => {
                         match event {
                             KeyEvent {
-                                code: KeyCode::Char('j'),
-                                modifiers: _,
+                                code: KeyCode::Char('n'),
+                                modifiers: event::KeyModifiers::CONTROL,
                                 kind: _,
                                 state: _,
                             } => {
                                 return AppEvent::MoveY(1);
                             },
                             KeyEvent {
-                                code: KeyCode::Char('k'),
-                                modifiers: _,
+                                code: KeyCode::Char('p'),
+                                modifiers: event::KeyModifiers::CONTROL,
                                 kind: _,
                                 state: _,
                             } => {
