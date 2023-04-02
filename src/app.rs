@@ -5,6 +5,7 @@ use crossterm::{execute, cursor, terminal};
 use crossterm::terminal::{Clear, ClearType};
 
 use crate::key_handler::KeyHandler;
+use crate::path_resolver::get_dirs;
 
 pub enum AppEvent {
     End,
@@ -38,18 +39,7 @@ impl App {
     }
 
     pub fn run(&mut self) -> std::io::Result<()> {
-        let options: Vec<&str> = vec![
-            "option 1",
-            "option 2",
-            "option 3",
-            "option 4",
-            "option 5",
-            "set 6",
-            "set 7",
-            "iu 8",
-            "iu 9",
-            "iu 10",
-        ];
+        let options: Vec<String> = get_dirs("/home/alucherdi/hj/*/*");
 
         terminal::enable_raw_mode().unwrap();
 
@@ -66,6 +56,7 @@ impl App {
                 cursor::MoveLeft(11 + (self.search.len() as u16)),
             )?;
 
+            //(usize, String)
             for (i, option) in options.iter()
                 .filter(|&x| x.contains(&self.search))
                 .enumerate() {

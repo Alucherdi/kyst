@@ -1,5 +1,6 @@
 use crossterm::terminal::disable_raw_mode;
 
+pub mod path_resolver;
 pub mod key_handler;
 pub mod app;
 
