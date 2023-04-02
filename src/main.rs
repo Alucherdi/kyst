@@ -5,7 +5,7 @@ pub mod app;
 
 
 fn main() {
-    let app = app::App::new();
+    let mut app = app::App::new();
 
     app.run().expect("Error while running");
     app.clear_screen();

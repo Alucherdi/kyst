@@ -3,12 +3,12 @@ use std::time::Duration;
 
 use crossterm::event::{Event, KeyEvent};
 
-use crate::app::AppEvent;
+use crate::app::{AppEvent, AppMode};
 
 pub struct KeyHandler;
 
 impl KeyHandler {
-    pub fn read_key(&self) -> AppEvent {
+    pub fn read_key(&self, app_mode: &AppMode) -> AppEvent {
         if event::poll(Duration::from_millis(500)).unwrap() {
             if let Event::Key(event) = event::read().unwrap() {
                 match event {
@@ -20,17 +20,55 @@ impl KeyHandler {
                     } => {
                         return AppEvent::End;
                     },
-                    KeyEvent {
-                        code: KeyCode::Char('j'),
-                        modifiers: _,
-                        kind: _,
-                        state: _,
-                    } => {
-                        return AppEvent::MoveY(1);
+                    _ => {}
+                }
+
+                match app_mode {
+                    AppMode::Normal => {
+                        match event {
+                            KeyEvent {
+                                code: KeyCode::Char('j'),
+                                modifiers: _,
+                                kind: _,
+                                state: _,
+                            } => {
+                                return AppEvent::MoveY(1);
+                            },
+                            KeyEvent {
+                                code: KeyCode::Char('k'),
+                                modifiers: _,
+                                kind: _,
+                                state: _,
+                            } => {
+                                return AppEvent::MoveY(-1);
+                            },
+                            KeyEvent {
+                                code: KeyCode::Char('i'),
+                                modifiers: _,
+                                kind: _,
+                                state: _,
+                            } => {
+                                return AppEvent::ChangeMode(AppMode::Insert);
+                            },
+                            _ => {
+                            },
+                        }
                     },
-                    _ => {
-                        println!("{:?}", event.code);
-                    },
+
+                    AppMode::Insert => {
+                        match event.code { 
+                            KeyCode::Char(c) => {
+                                return AppEvent::SendKeyStroke(c);
+                            },
+                            KeyCode::Backspace => {
+                                return AppEvent::SendSpecial(KeyCode::Backspace);
+                            },
+                            KeyCode::Esc => {
+                                return AppEvent::ChangeMode(AppMode::Normal);
+                            },
+                            _ => {},
+                        }
+                    }
                 }
             }
         }
