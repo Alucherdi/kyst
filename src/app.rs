@@ -29,6 +29,7 @@ pub struct App {
 }
 
 impl App {
+
     pub fn new() -> App {
         App {
             key_handler: KeyHandler,
@@ -45,6 +46,8 @@ impl App {
 
         self.clear_screen();
         loop {
+            self.clear_screen();
+
             execute!(
                 stdout(),
                 Print(format!("Prompt[{}]: {}\n", 
@@ -57,7 +60,8 @@ impl App {
             )?;
 
             //(usize, String)
-            for (i, option) in options.iter()
+            for (i, option) in options
+                .iter()
                 .filter(|&x| x.contains(&self.search))
                 .enumerate() {
                 execute!(
@@ -100,7 +104,6 @@ impl App {
                 }
                 _ => {},
             }
-            self.clear_screen();
         }
 
         Ok(())
