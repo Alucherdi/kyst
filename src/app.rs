@@ -79,6 +79,8 @@ impl App {
                 term_size.1 as usize - 2
             ) + offset;
 
+            if limit > options.len() { limit = options.len() - 1 };
+
             screen_options = filtered_options[offset..limit].to_vec();
 
             for (i, option) in screen_options.iter().enumerate() {
@@ -112,26 +114,18 @@ impl App {
                 AppEvent::MoveY(to) => {
                     self.selection += to;
 
-                    if self.selection > ((limit - offset) as i16) - 1 {
-                        offset += 1;
-                        self.selection -= to;
-                    }
-                    /*
                     if self.selection < 0 {
                         if offset > 0 {
                             offset -= 1;
+                            limit -= 1;
                         }
+                        self.selection = 0;
+                    }
 
-                        self.selection = 0 + offset as i16;
-                    };
-                    if self.selection >= limit as i16 {
-                        if offset < options.len() {
-                            offset += 1;
-                        }
-
-                        self.selection = (limit - 1) as i16;
-                    };
-                    */
+                    if self.selection > ((limit - offset) as i16) - 1 {
+                        if limit < filtered_options.len() - 1 { offset += 1; }
+                        self.selection -= 1;
+                    }
                 },
                 AppEvent::ChangeMode(new_mode) => {
                     self.mode = new_mode;
