@@ -132,6 +132,8 @@ impl App {
                 },
                 AppEvent::SendKeyStroke(ks) => {
                     self.search.push(ks);
+                    offset = 0;
+                    self.selection = 0;
                 },
                 AppEvent::SendSpecial(kc) => {
                     match kc {
