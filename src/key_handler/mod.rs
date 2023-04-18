@@ -60,6 +60,9 @@ impl KeyHandler {
                             KeyCode::Char(c) => {
                                 return AppEvent::SendKeyStroke(c);
                             },
+                            KeyCode::Enter => {
+                                return AppEvent::SendSpecial(KeyCode::Enter);
+                            },
                             KeyCode::Backspace => {
                                 return AppEvent::SendSpecial(KeyCode::Backspace);
                             },

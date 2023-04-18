@@ -1,5 +1,6 @@
 use std::io::stdout;
 use std::cmp::min;
+use std::process::Command;
 use crossterm::event::KeyCode;
 use crossterm::style::{SetForegroundColor, SetBackgroundColor, Print, ResetColor, Color};
 use crossterm::{execute, cursor, terminal};
@@ -22,26 +23,37 @@ pub enum AppMode {
     Insert,
 }
 
+pub struct Config {
+    path: String,
+    command: String
+}
+
 pub struct App {
     key_handler: KeyHandler,
     selection: i16,
     search: String,
     mode: AppMode,
+    config: Config,
 }
 
 impl App {
 
-    pub fn new() -> App {
+    pub fn new(path: &str, command: &str) -> App {
+        println!("{}", path);
         App {
             key_handler: KeyHandler,
             mode: AppMode::Normal,
             search: String::new(),
             selection: 0,
+            config: Config {
+                path: path.to_string(),
+                command: command.to_string(),
+            }
         }
     }
 
     pub fn run(&mut self) -> std::io::Result<()> {
-        let options: Vec<String> = get_dirs("/home/alucherdi/hj/*/*");
+        let options: Vec<String> = get_dirs(&self.config.path);
         let mut filtered_options: Vec<&String>;
         let mut screen_options: Vec<&String>;
 
@@ -140,6 +152,20 @@ impl App {
                         KeyCode::Backspace => {
                             self.search.pop();
                         },
+                        KeyCode::Enter => {
+                            let raw_command = format!(
+                                "tmux new -d -s Test && tmux send-keys -t Test 'cd {} && v' Enter && tmux a -t Test", filtered_options[self.selection as usize]
+                            );
+
+                            match Command::new("sh").args([
+                                "-c",
+                                &raw_command
+                            ]).spawn() {
+                                Ok(_) => (),
+                                Err(stderr) => println!("{:?}", stderr)
+                            }
+                            break;
+                        }
                         _ => {}
                     }
                 }
