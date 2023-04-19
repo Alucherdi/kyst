@@ -1,6 +1,5 @@
 use std::io::stdout;
 use std::cmp::min;
-use std::process::Command;
 use crossterm::event::KeyCode;
 use crossterm::style::{SetForegroundColor, SetBackgroundColor, Print, ResetColor, Color};
 use crossterm::{execute, cursor, terminal};
@@ -23,37 +22,29 @@ pub enum AppMode {
     Insert,
 }
 
-pub struct Config {
-    path: String,
-    command: String
-}
-
 pub struct App {
     key_handler: KeyHandler,
     selection: i16,
     search: String,
     mode: AppMode,
-    config: Config,
+    path: String,
 }
 
 impl App {
 
-    pub fn new(path: &str, command: &str) -> App {
+    pub fn new(path: &str) -> App {
         println!("{}", path);
         App {
             key_handler: KeyHandler,
             mode: AppMode::Normal,
             search: String::new(),
             selection: 0,
-            config: Config {
-                path: path.to_string(),
-                command: command.to_string(),
-            }
+            path: path.to_string()
         }
     }
 
-    pub fn run(&mut self) -> std::io::Result<()> {
-        let options: Vec<String> = get_dirs(&self.config.path);
+    pub fn run(&mut self) -> std::io::Result<(bool, String)> {
+        let options: Vec<String> = get_dirs(&self.path);
         let mut filtered_options: Vec<&String>;
         let mut screen_options: Vec<&String>;
 
@@ -61,6 +52,8 @@ impl App {
 
         let mut limit: usize;
         let mut offset: usize = 0;
+
+        let mut success = false;
 
         terminal::enable_raw_mode().unwrap();
 
@@ -153,17 +146,7 @@ impl App {
                             self.search.pop();
                         },
                         KeyCode::Enter => {
-                            let raw_command = format!(
-                                "tmux new -d -s Test && tmux send-keys -t Test 'cd {} && v' Enter && tmux a -t Test", filtered_options[self.selection as usize]
-                            );
-
-                            match Command::new("sh").args([
-                                "-c",
-                                &raw_command
-                            ]).spawn() {
-                                Ok(_) => (),
-                                Err(stderr) => println!("{:?}", stderr)
-                            }
+                            success = true;
                             break;
                         }
                         _ => {}
@@ -173,7 +156,7 @@ impl App {
             }
         }
 
-        Ok(())
+        Ok((success, filtered_options[self.selection as usize].to_string()))
     }
 
     pub fn clear_screen(&self) {
