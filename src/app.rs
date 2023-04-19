@@ -1,32 +1,24 @@
 use std::io::stdout;
 use std::cmp::min;
 use crossterm::event::KeyCode;
-use crossterm::style::{SetForegroundColor, SetBackgroundColor, Print, ResetColor, Color};
 use crossterm::{execute, cursor, terminal};
 use crossterm::terminal::{Clear, ClearType, size};
 
-use crate::key_handler::KeyHandler;
+use crate::key_handler::read_key;
 use crate::path_resolver::get_dirs;
+use crate::renderer::{render_header, render_options};
 
 pub enum AppEvent {
     End,
     MoveY(i16),
     SendKeyStroke(char),
     SendSpecial(KeyCode),
-    ChangeMode(AppMode),
     Non,
 }
 
-pub enum AppMode {
-    Normal,
-    Insert,
-}
-
 pub struct App {
-    key_handler: KeyHandler,
     selection: i16,
     search: String,
-    mode: AppMode,
     path: String,
 }
 
@@ -35,8 +27,6 @@ impl App {
     pub fn new(path: &str) -> App {
         println!("{}", path);
         App {
-            key_handler: KeyHandler,
-            mode: AppMode::Normal,
             search: String::new(),
             selection: 0,
             path: path.to_string()
@@ -47,30 +37,17 @@ impl App {
         let options: Vec<String> = get_dirs(&self.path);
         let mut filtered_options: Vec<&String>;
         let mut screen_options: Vec<&String>;
-
         let mut term_size: (u16, u16);
-
         let mut limit: usize;
         let mut offset: usize = 0;
-
         let mut success = false;
 
         terminal::enable_raw_mode().unwrap();
 
-        self.clear_screen();
         loop {
             self.clear_screen();
 
-            execute!(
-                stdout(),
-                Print(format!("Prompt[{}]: {}\n", 
-                    match self.mode {
-                        AppMode::Normal => "n",
-                        AppMode::Insert => "i"
-                    },
-                    self.search)),
-                cursor::MoveLeft(11 + (self.search.len() as u16)),
-            )?;
+            render_header(&self.search);
 
             filtered_options = options
                 .iter()
@@ -88,31 +65,9 @@ impl App {
 
             screen_options = filtered_options[offset..limit].to_vec();
 
-            for (i, option) in screen_options.iter().enumerate() {
-                execute!(
-                    stdout(),
-                    SetForegroundColor(
-                        if i == self.selection as usize { Color::Black }
-                        else { Color::Reset }
-                    ),
-                    SetBackgroundColor(
-                        if i == self.selection as usize { Color::White }
-                        else { Color::Reset }
-                    ),
-                    Print(
-                        if option.len() > term_size.0 as usize {
-                            option
-                                .to_string()[..term_size.0 as usize]
-                                .to_string() 
-                        } else { option.to_string() } +
-                        "\n"
-                    ),
-                    cursor::MoveLeft(option.len() as u16),
-                    ResetColor
-                )?;
-            }
+            render_options(screen_options, self.selection, term_size);
 
-            match self.key_handler.read_key(&self.mode) {
+            match read_key() {
                 AppEvent::End => {
                     break;
                 },
@@ -131,9 +86,6 @@ impl App {
                         if limit < filtered_options.len() - 1 { offset += 1; }
                         self.selection -= 1;
                     }
-                },
-                AppEvent::ChangeMode(new_mode) => {
-                    self.mode = new_mode;
                 },
                 AppEvent::SendKeyStroke(ks) => {
                     self.search.push(ks);
@@ -156,6 +108,8 @@ impl App {
             }
         }
 
+        self.clear_screen();
+        terminal::disable_raw_mode().unwrap();
         Ok((success, filtered_options[self.selection as usize].to_string()))
     }
 
