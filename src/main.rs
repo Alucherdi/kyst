@@ -6,15 +6,10 @@ pub mod key_handler;
 pub mod renderer;
 pub mod app;
 
-use crate::config::{load_config, Config};
+use crate::config::load_config;
 
 fn main() {
-    let conf = match load_config() {
-        Some(c) => c,
-        None => {
-            Config::empty()
-        }
-    };
+    let conf = load_config();
 
     let mut app = app::App::new(
         &conf.path

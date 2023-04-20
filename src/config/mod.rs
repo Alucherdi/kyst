@@ -9,14 +9,14 @@ pub struct Config {
 }
 
 impl Config {
-   pub fn new(path: &str, command: &str) -> Config {
+   fn new(path: &str, command: &str) -> Config {
        Config {
            path: path.to_string(),
            command: command.to_string(),
        }
    }
 
-   pub fn empty() -> Config {
+   fn default() -> Config {
        Config {
            path: env::current_dir()
                .unwrap()
@@ -26,17 +26,25 @@ impl Config {
            command: "tmux new -s {name}".to_string()
        }
    }
+
 }
 
-pub fn load_config() -> Option<Config> {
+pub fn load_config() -> Config {
+    let default_path = env::current_dir()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string() + "/*";
+
+    let default_command = "tmux new -s {name}".to_string();
+
     let home = match env::var_os("HOME") {
         Some(var) => var
             .to_str()
             .unwrap()
             .to_string(),
         None => {
-            // HOME env does not exist
-            return None
+            return Config::default(); 
         }
     };
 
@@ -45,29 +53,38 @@ pub fn load_config() -> Option<Config> {
         home
     );
 
-    let config_path = match fs::read(config_path) {
-        Ok(content) => content,
+    let raw_config: String = match fs::read(config_path) {
+        Ok(config_path) => String::from_utf8_lossy(
+            &config_path
+        ).parse().unwrap(),
         Err(_) => {
-            // HOME/.config/kyst/kyst.json does not exist
-            return None
+            return Config::default();
         },
     };
 
-    let raw_config: String = String::from_utf8_lossy(
-        &config_path
-    ).parse().unwrap();
+    let json_config: Value = match from_str(&raw_config) {
+        Ok(jc) => jc,
+        Err(_) => {
+            return Config::default();
+        }
+    };
 
-    let json_config: Value = from_str(&raw_config)
-        .unwrap();
 
-    Some(Config::new(
-        json_config["path"]
-            .as_str()
-            .unwrap(),
+    Config::new(
+        if json_config["path"].is_null() {
+            &default_path
+        } else {
+            json_config["path"]
+                .as_str()
+                .unwrap()
+        },
 
-        json_config["command"]
-            .as_str()
-            .unwrap()
-    ))
-
+        if json_config["command"].is_null() {
+            &default_command 
+        } else {
+            json_config["command"]
+                .as_str()
+                .unwrap()
+        }
+    )
 }

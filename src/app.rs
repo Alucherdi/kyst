@@ -13,6 +13,7 @@ pub enum AppEvent {
     MoveY(i16),
     SendKeyStroke(char),
     SendSpecial(KeyCode),
+    DeleteAll,
     Non,
 }
 
@@ -35,8 +36,8 @@ impl App {
 
     pub fn run(&mut self) -> std::io::Result<(bool, String)> {
         let options: Vec<String> = get_dirs(&self.path);
+
         let mut filtered_options: Vec<&String>;
-        let mut screen_options: Vec<&String>;
         let mut term_size: (u16, u16);
         let mut limit: usize;
         let mut offset: usize = 0;
@@ -63,9 +64,11 @@ impl App {
 
             if limit > options.len() { limit = options.len() - 1 };
 
-            screen_options = filtered_options[offset..limit].to_vec();
-
-            render_options(screen_options, self.selection, term_size);
+            render_options(
+                filtered_options[offset..limit].to_vec(),
+                self.selection,
+                term_size
+            );
 
             match read_key() {
                 AppEvent::End => {
@@ -92,13 +95,18 @@ impl App {
                     offset = 0;
                     self.selection = 0;
                 },
+                AppEvent::DeleteAll => {
+                    self.search = "".to_string()
+                },
                 AppEvent::SendSpecial(kc) => {
                     match kc {
                         KeyCode::Backspace => {
                             self.search.pop();
                         },
-                        KeyCode::Enter => {
-                            success = true;
+                        KeyCode::Enter | KeyCode::Esc => {
+                            if filtered_options.len() > 0 {
+                                success = true;
+                            }
                             break;
                         }
                         _ => {}
@@ -110,7 +118,13 @@ impl App {
 
         self.clear_screen();
         terminal::disable_raw_mode().unwrap();
-        Ok((success, filtered_options[self.selection as usize].to_string()))
+        Ok((
+            success,
+            match success {
+                true => filtered_options[self.selection as usize].to_string(),
+                false => "".to_string()
+            }
+        ))
     }
 
     pub fn clear_screen(&self) {
